@@ -4,22 +4,25 @@ services:
   mongodb:
     image: mongo
     restart: unless-stopped
-    env_file: ./.env
+    env_file: .env
     environment:
       - MONGO_INITDB_ROOT_USERNAME=$MONGODB_USER
       - MONGO_INITDB_ROOT_PASSWORD=$MONGODB_PASSWORD
     ports:
-      - $MONGODB_LOCAL_PORT:$MONGODB_DOCKER_PORT
+      - "${MONGODB_LOCAL_PORT}:${MONGODB_DOCKER_PORT}"
     volumes:
-      - db:/data/db
+      - ./database/db:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
   app:
     depends_on:
       - mongodb
-    build: app
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: ./.env
+    env_file: .env
     ports:
-      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+      - "${NODE_LOCAL_PORT}:${NODE_DOCKER_PORT}"
     environment:
       - DB_HOST=mongodb
       - DB_USER=$MONGODB_USER
@@ -28,6 +31,7 @@ services:
       - DB_PORT=$MONGODB_DOCKER_PORT
     stdin_open: true
     tty: true
+    volumes:
+      - /app/node_modules
+      - ./app:/app
 
-volumes:
-  db:
