@@ -4,23 +4,27 @@ services:
   mongodb:
     image: mongo
     restart: unless-stopped
-    env_file: .env
+    env_file: ./.env
     environment:
       - MONGO_INITDB_ROOT_USERNAME=$MONGODB_USER
       - MONGO_INITDB_ROOT_PASSWORD=$MONGODB_PASSWORD
     ports:
       - "${MONGODB_LOCAL_PORT}:${MONGODB_DOCKER_PORT}"
+    networks:
+      - backend-mongo
     volumes:
-      - ./database/db:/data/db
+      - dbdata:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-  app:
+  backend:
     depends_on:
       - mongodb
     build:
-      context: ./app
+      context: backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file: ./.env
+    networks:
+      - backend-mongo
     ports:
       - "${NODE_LOCAL_PORT}:${NODE_DOCKER_PORT}"
     environment:
@@ -32,6 +36,12 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - /app/node_modules
-      - ./app:/app
+      - ./backend:/home/node/backend
+      - node_modules:/home/node/backend/node_modules
 
+networks:
+  backend-mongo:
+    driver: bridge
+volumes:
+  dbdata:
+  node_modules:
