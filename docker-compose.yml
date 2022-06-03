@@ -15,6 +15,16 @@ services:
     volumes:
       - dbdata:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+#  mongo-gui:
+#    container_name: "mongo-gui"
+#    image: ugleiton/mongo-gui
+#    restart: unless-stopped
+#    ports:
+#      - "4321:4321"
+#    environment:
+#      - MONGO_URL=mongodb://localhost:27017
+
   backend:
     depends_on:
       - mongodb
