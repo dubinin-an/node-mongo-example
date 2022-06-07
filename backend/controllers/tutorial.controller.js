@@ -1,12 +1,13 @@
 const db = require("../models");
+const serverResponses = require("../utils/helpers/responses");
+const messages = require("../config/messages");
 const Tutorial = db.tutorials;
 
 // Create and Save a new Tutorial
 exports.create = (req, res) => {
   // Validate request
   if (!req.body.title) {
-    res.status(400).send({ message: "Content can not be empty!" });
-    return;
+    return serverResponses.sendError(req.body, messages.BAD_REQUEST);
   }
 
   // Create a Tutorial
@@ -19,31 +20,25 @@ exports.create = (req, res) => {
   // Save Tutorial in the database
   tutorial
     .save(tutorial)
-    .then(data => {
-      res.send(data);
+    .then((data) => {
+      serverResponses.sendSuccess(res, messages.SUCCESSFUL, data);
     })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Tutorial."
-      });
+    .catch((err) => {
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
 // Retrieve all Tutorials from the database.
 exports.findAll = (req, res) => {
   const title = req.query.title;
-  var condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {};
+  const condition = title ? { title: { $regex: new RegExp(title), $options: "i" } } : {};
 
   Tutorial.find(condition)
-    .then(data => {
-      res.send(data);
+    .then((data) => {
+      serverResponses.sendSuccess(res, messages.SUCCESSFUL, data);
     })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving tutorials."
-      });
+    .catch((err) => {
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
@@ -54,38 +49,32 @@ exports.findOne = (req, res) => {
   Tutorial.findById(id)
     .then(data => {
       if (!data)
-        res.status(404).send({ message: "Not found Tutorial with id " + id });
-      else res.send(data);
+        serverResponses.sendError(res, messages.NOT_FOUND, data);
+      else
+        serverResponses.sendSuccess(res, messages.SUCCESSFUL, data);
     })
-    .catch(err => {
-      res
-        .status(500)
-        .send({ message: "Error retrieving Tutorial with id=" + id });
+    .catch((err) => {
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
 // Update a Tutorial by the id in the request
 exports.update = (req, res) => {
   if (!req.body) {
-    return res.status(400).send({
-      message: "Data to update can not be empty!"
-    });
+    return serverResponses.sendError(req.body, messages.BAD_REQUEST);
   }
 
   const id = req.params.id;
 
   Tutorial.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
     .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: `Cannot update Tutorial with id=${id}. Maybe Tutorial was not found!`
-        });
-      } else res.send({ message: "Tutorial was updated successfully." });
+      if (!data)
+        serverResponses.sendError(res, messages.NOT_FOUND, data);
+      else
+        serverResponses.sendSuccess(res, messages.SUCCESSFUL_UPDATE, data);
     })
     .catch(err => {
-      res.status(500).send({
-        message: "Error updating Tutorial with id=" + id
-      });
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
@@ -95,20 +84,13 @@ exports.delete = (req, res) => {
 
   Tutorial.findByIdAndRemove(id, { useFindAndModify: false })
     .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: `Cannot delete Tutorial with id=${id}. Maybe Tutorial was not found!`
-        });
-      } else {
-        res.send({
-          message: "Tutorial was deleted successfully!"
-        });
-      }
+      if (!data)
+        serverResponses.sendError(res, messages.NOT_FOUND, data);
+      else
+        serverResponses.sendSuccess(res, messages.SUCCESSFUL_DELETE, data);
     })
     .catch(err => {
-      res.status(500).send({
-        message: "Could not delete Tutorial with id=" + id
-      });
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
@@ -116,19 +98,16 @@ exports.delete = (req, res) => {
 exports.deleteAll = (req, res) => {
   Tutorial.deleteMany({})
     .then(data => {
-      res.send({
-        message: `${data.deletedCount} Tutorials were deleted successfully!`
-      });
+      // message: `${data.deletedCount} Tutorials were deleted successfully!`
+
+      serverResponses.sendSuccess(res, messages.SUCCESSFUL_DELETE, data);
     })
     .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while removing all tutorials."
-      });
+      serverResponses.sendError(res, messages.BAD_REQUEST, err);
     });
 };
 
-// Find all published Tutorials
+//Find all published Tutorials
 exports.findAllPublished = (req, res) => {
   Tutorial.find({ published: true })
     .then(data => {
