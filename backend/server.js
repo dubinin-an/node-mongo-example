@@ -11,7 +11,7 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// app.use(morgan(':date[iso] :remote-addr :remote-user :method :url :status :res[header] - :response-time ms :req[header]'))
+// app.use(morgan(':remote-addr'))
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -19,11 +19,7 @@ app.use(express.json());
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
-
-
 const db = require("./models");
-
-console.log(db.url);
 
 const {
   DB_USER,
@@ -33,15 +29,18 @@ const {
 } = process.env;
 
 app.use(mongoosemorgan({
-    collection: 'error_logger',
-    connectionString: `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/logs-db?authSource=admin`,
+    collection: 'logs',
+    connectionString: db.url,
+    // connectionString: `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/logs-db?authSource=admin`,
   },
   {
-    // skip: function (req, res) {
-    //   return res.statusCode < 400;
-    // }
+    skip: function (req, res) {
+        console.log('skip', req.method)
+      return req.originalUrl.includes('logs') && req.method !== 'DELETE';
+      // return res.statusCode < 400;
+    }
   },
-  '{date::date[iso];ip::remote-addr;user::remote-user;methode::method;url::url;status::status;res::res[header];resTime::response-time ms;req::req[header]}'
+  '{date::date[iso];ip::remote-addr;user::remote-user;methode::method;url::url;status::status;body::body;resTime::response-time ms}'
 ));
 
 db.mongoose
@@ -63,6 +62,7 @@ app.get("/", (req, res) => {
 });
 
 require("./routes/turorial.routes")(app);
+require("./routes/logs.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.NODE_DOCKER_PORT || 8080;

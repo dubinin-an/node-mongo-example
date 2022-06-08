@@ -22,8 +22,8 @@
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "mongoose": "^6.3.4",
-    "mongoose-morgan": "^1.0.17",
-    "morgan": "^1.10.0"
+    "mongoose-morgan": "github:dubinin-an/mongoose-morgan",
+    "morgan": "github:dubinin-an/morgan"
   },
   "devDependencies": {
     "nodemon": "^2.0.16"
